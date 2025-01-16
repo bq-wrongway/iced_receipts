@@ -1,0 +1,8 @@
+[package]
+name = "receipts"
+version = "0.1.0"
+edition = "2021"
+authors = ["Andy Terra <spam@andyterra.com>"]
+
+[dependencies]
+iced = { version = "0.13.1", features = ["advanced"] }
