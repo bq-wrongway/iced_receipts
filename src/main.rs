@@ -36,15 +36,19 @@ enum Message {
     Hotkey(Hotkey),
 }
 
+#[derive(Debug)]
+enum Operation {
+    Sale(usize, sale::Operation),
+}
+
 struct App {
     screen: Screen,
     sales: HashMap<usize, sale::Sale>,
     pending_sale: (usize, sale::Sale),
+    next_sale_id: AtomicUsize,
 }
 
 impl App {
-    const NEXT_SALE_ID: AtomicUsize = AtomicUsize::new(0);
-
     fn theme(&self) -> iced::Theme {
         iced::Theme::Light
     }
@@ -73,6 +77,7 @@ impl App {
                 screen: Screen::List,
                 sales: HashMap::new(),
                 pending_sale: (initial_id, Sale::default()),
+                next_sale_id: AtomicUsize::new(initial_id + 1),
             },
             Task::none(),
         )
@@ -95,9 +100,18 @@ impl App {
                         self.sales.get_mut(&sale_id).expect("Sale should exist")
                     };
 
-                    return sale::handle_hotkey(sale, mode, hotkey)
-                        .task
+                    // Let the sale module handle the hotkey and return an Action
+                    let action = sale::handle_hotkey(sale, mode, hotkey)
+                        .map_operation(move |o| Operation::Sale(sale_id, o))
                         .map(move |m| Message::Sale(sale_id, m));
+
+                    let operation_task = if let Some(operation) = action.operation {
+                        self.perform(operation)
+                    } else {
+                        Task::none()
+                    };
+
+                    return operation_task.chain(action.task);
                 }
             },
             Message::Sale(sale_id, msg) => {
@@ -107,41 +121,18 @@ impl App {
                     self.sales.get_mut(&sale_id).expect("Sale should exist")
                 };
 
-                // Let the sale module handle the message
-                let action = sale::update(sale, msg);
+                // Let the sale module handle the message and return an Action
+                let action = sale::update(sale, msg)
+                    .map_operation(move |o| Operation::Sale(sale_id, o))
+                    .map(move |m| Message::Sale(sale_id, m));
 
-                if let Some(operation) = action.operation {
-                    match operation {
-                        sale::Operation::Back => {
-                            self.screen = Screen::List;
-                        }
-                        sale::Operation::Save => {
-                            if sale_id == self.pending_sale.0 {
-                                // take ownership of the current pending sale
-                                // and replace it with a new default blank sale
-                                // before inserting this one into the sales map
-                                let current_sale =
-                                    std::mem::replace(&mut self.pending_sale.1, Sale::default());
+                let operation_task = if let Some(operation) = action.operation {
+                    self.perform(operation)
+                } else {
+                    Task::none()
+                };
 
-                                let current_id = std::mem::replace(
-                                    &mut self.pending_sale.0,
-                                    Self::NEXT_SALE_ID.fetch_add(1, Ordering::Relaxed),
-                                );
-
-                                self.sales.insert(current_id, current_sale);
-                                self.screen = Screen::Sale(sale::Mode::View, current_id);
-                            } else {
-                                self.screen = Screen::Sale(sale::Mode::View, sale_id);
-                            }
-                        }
-                        sale::Operation::StartEdit => {
-                            self.screen = Screen::Sale(sale::Mode::Edit, sale_id);
-                        }
-                        sale::Operation::Cancel => {
-                            self.screen = Screen::Sale(sale::Mode::View, sale_id);
-                        }
-                    }
-                }
+                return operation_task.chain(action.task);
             }
         }
         Task::none()
@@ -159,6 +150,47 @@ impl App {
                 sale::view(sale, *mode).map(|msg| Message::Sale(*id, msg))
             }
         }
+    }
+
+    fn perform(&mut self, operation: Operation) -> Task<Message> {
+        match operation {
+            Operation::Sale(sale_id, operation) => match operation {
+                sale::Operation::Back => match self.screen {
+                    Screen::List => {}
+                    Screen::Sale(mode, sale_id) => match mode {
+                        sale::Mode::Edit => self.screen = Screen::Sale(sale::Mode::View, sale_id),
+                        sale::Mode::View => self.screen = Screen::List,
+                    },
+                },
+                sale::Operation::Save => {
+                    if sale_id == self.pending_sale.0 {
+                        // take ownership of the current pending sale
+                        // and replace it with a new default blank sale
+                        // before inserting this one into the sales map
+                        let current_sale =
+                            std::mem::replace(&mut self.pending_sale.1, Sale::default());
+
+                        let current_id = std::mem::replace(
+                            &mut self.pending_sale.0,
+                            self.next_sale_id.fetch_add(1, Ordering::SeqCst),
+                        );
+
+                        self.sales.insert(current_id, current_sale);
+                        self.screen = Screen::Sale(sale::Mode::View, current_id);
+                    } else {
+                        self.screen = Screen::Sale(sale::Mode::View, sale_id);
+                    }
+                }
+                sale::Operation::StartEdit => {
+                    self.screen = Screen::Sale(sale::Mode::Edit, sale_id);
+                }
+                sale::Operation::Cancel => {
+                    self.screen = Screen::Sale(sale::Mode::View, sale_id);
+                }
+            },
+        }
+
+        Task::none()
     }
 
     fn subscription(&self) -> Subscription<Message> {

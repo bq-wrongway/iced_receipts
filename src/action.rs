@@ -52,6 +52,20 @@ impl<Operation, Message> Action<Operation, Message> {
         }
     }
 
+    pub fn map_operation<N>(
+        self,
+        f: impl Fn(Operation) -> N + MaybeSend + 'static,
+    ) -> Action<N, Message>
+    where
+        Operation: MaybeSend + 'static,
+        N: MaybeSend + 'static,
+    {
+        Action {
+            operation: self.operation.map(f),
+            task: self.task,
+        }
+    }
+
     pub fn with_operation(mut self, operation: Operation) -> Self {
         self.operation = Some(operation);
         self
