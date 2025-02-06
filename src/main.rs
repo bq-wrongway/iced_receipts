@@ -38,8 +38,8 @@ enum Message {
 }
 
 #[derive(Debug)]
-enum Operation {
-    Sale(Option<usize>, sale::Operation),
+enum Instruction {
+    Sale(Option<usize>, sale::Instruction),
 }
 
 struct App {
@@ -121,17 +121,17 @@ impl App {
                     };
 
                     let action = sale::handle_hotkey(sale, mode, hotkey)
-                        .map_operation(move |o| Operation::Sale(sale_id, o))
+                        .map_instruction(move |o| Instruction::Sale(sale_id, o))
                         .map(move |m| Message::Sale(sale_id, m));
 
-                    let operation_task =
-                        if let Some(operation) = action.operation {
-                            self.perform(operation)
+                    let instruction_task =
+                        if let Some(instruction) = action.instruction {
+                            self.perform(instruction)
                         } else {
                             Task::none()
                         };
 
-                    return operation_task.chain(action.task);
+                    return instruction_task.chain(action.task);
                 }
             },
             Message::Sale(sale_id, msg) => {
@@ -144,16 +144,17 @@ impl App {
                 };
 
                 let action = sale::update(sale, msg)
-                    .map_operation(move |o| Operation::Sale(sale_id, o))
+                    .map_instruction(move |o| Instruction::Sale(sale_id, o))
                     .map(move |m| Message::Sale(sale_id, m));
 
-                let operation_task = if let Some(operation) = action.operation {
-                    self.perform(operation)
-                } else {
-                    Task::none()
-                };
+                let instruction_task =
+                    if let Some(instruction) = action.instruction {
+                        self.perform(instruction)
+                    } else {
+                        Task::none()
+                    };
 
-                return operation_task.chain(action.task);
+                return instruction_task.chain(action.task);
             }
         }
         Task::none()
@@ -173,10 +174,10 @@ impl App {
         }
     }
 
-    fn perform(&mut self, operation: Operation) -> Task<Message> {
-        match operation {
-            Operation::Sale(sale_id, operation) => match operation {
-                sale::Operation::Back => match self.screen {
+    fn perform(&mut self, instruction: Instruction) -> Task<Message> {
+        match instruction {
+            Instruction::Sale(sale_id, instruction) => match instruction {
+                sale::Instruction::Back => match self.screen {
                     Screen::List => {}
                     Screen::Sale(mode, _) => match mode {
                         sale::Mode::Edit => {
@@ -186,7 +187,7 @@ impl App {
                         sale::Mode::View => self.screen = Screen::List,
                     },
                 },
-                sale::Operation::Save => {
+                sale::Instruction::Save => {
                     let final_id = match self.draft.0 {
                         Some(id) => {
                             // Editing existing sale
@@ -209,14 +210,14 @@ impl App {
                     self.screen =
                         Screen::Sale(sale::Mode::View, Some(final_id));
                 }
-                sale::Operation::StartEdit => {
+                sale::Instruction::StartEdit => {
                     if let Some(id) = sale_id {
                         // Start editing existing sale
                         self.draft = (Some(id), self.sales[&id].clone());
                     }
                     self.screen = Screen::Sale(sale::Mode::Edit, sale_id);
                 }
-                sale::Operation::Cancel => {
+                sale::Instruction::Cancel => {
                     match sale_id {
                         Some(id) => {
                             // Restore draft from original sale

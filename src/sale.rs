@@ -115,26 +115,27 @@ pub enum Message {
 }
 
 #[derive(Debug, Clone)]
-pub enum Operation {
+pub enum Instruction {
     Back,
     Save,
     StartEdit,
     Cancel,
 }
 
-pub type Action = crate::Action<Operation, Message>;
+pub type Action = crate::Action<Instruction, Message>;
 
 pub fn update(sale: &mut Sale, message: Message) -> Action {
     match message {
         Message::Show(msg) => match msg {
-            show::Message::Back => Action::operation(Operation::Back),
+            show::Message::Back => Action::instruction(Instruction::Back),
             show::Message::StartEdit => {
-                Action::operation(Operation::StartEdit).with_task(focus_next())
+                Action::instruction(Instruction::StartEdit)
+                    .with_task(focus_next())
             }
         },
         Message::Edit(msg) => match msg {
-            edit::Message::Cancel => Action::operation(Operation::Cancel),
-            edit::Message::Save => Action::operation(Operation::Save),
+            edit::Message::Cancel => Action::instruction(Instruction::Cancel),
+            edit::Message::Save => Action::instruction(Instruction::Save),
             edit::Message::NameInput(name) => {
                 sale.name = name;
                 Action::none()
@@ -224,7 +225,7 @@ pub fn view(sale: &Sale, mode: Mode) -> Element<Message> {
 
 pub fn handle_hotkey(_: &Sale, mode: Mode, hotkey: Hotkey) -> Action {
     // match hotkey {
-    //     Hotkey::Escape => Action::operation(Operation::Cancel),
+    //     Hotkey::Escape => Action::instruction(Instruction::Cancel),
     //     _ => match mode {
     //         Mode::View => Action::none(),
     //         Mode::Edit => edit::handle_hotkey(hotkey).map(Message::Edit),

@@ -7,7 +7,7 @@ use iced::{Alignment, Element, Length};
 
 use crate::Hotkey;
 
-use super::{Operation, Sale};
+use super::{Instruction, Sale};
 
 #[derive(Debug, Clone)]
 pub enum Message {
@@ -111,9 +111,9 @@ pub fn view(sale: &Sale) -> Element<Message> {
     .into()
 }
 
-pub fn handle_hotkey(hotkey: Hotkey) -> crate::Action<Operation, Message> {
+pub fn handle_hotkey(hotkey: Hotkey) -> crate::Action<Instruction, Message> {
     match hotkey {
-        Hotkey::Escape => crate::Action::operation(Operation::Back),
+        Hotkey::Escape => crate::Action::instruction(Instruction::Back),
         _ => crate::Action::none(),
     }
 }

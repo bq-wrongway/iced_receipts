@@ -8,7 +8,7 @@ use iced::{Alignment, Element, Length};
 
 use crate::Hotkey;
 
-use super::{Operation, Sale, TaxGroup};
+use super::{Instruction, Sale, TaxGroup};
 
 #[derive(Debug, Clone)]
 pub enum Message {
@@ -213,7 +213,7 @@ pub fn view(sale: &Sale) -> Element<Message> {
     .into()
 }
 
-pub fn handle_hotkey(hotkey: Hotkey) -> crate::Action<Operation, Message> {
+pub fn handle_hotkey(hotkey: Hotkey) -> crate::Action<Instruction, Message> {
     match hotkey {
         Hotkey::Tab(modifier) => {
             if modifier.shift() {

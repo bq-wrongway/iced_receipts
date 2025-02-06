@@ -18,7 +18,7 @@ This example showcases a few useful patterns for building desktop applications w
 
 - Screens sharing single simple straightforward state, as said by someone struck
   with some alliteration spell
-- A clean and flexible `Action` API for handling screen events and operations
+- A clean and flexible `Action` API for handling screen events and instructions
 - Form handling with keyboard navigation (Tab and Escape)
 
 ## Project Structure
@@ -30,27 +30,27 @@ src/
 ├── sale.rs        # Edit/view mode screens example
 │   ├── edit.rs    # Edit screen for creating and updating sales
 │   └── show.rs    # Read-only mode for sales
-└── action.rs      # Action API for handling operations
+└── action.rs      # Action API for handling instructions
 ```
 
 ## Action API
 
 The example uses a `Action` type providing a unified way to handle both
-operations and tasks across screens, where operations are in-app actions
+instructions and tasks across screens, where instructions are in-app actions
 directly by your application while tasks are handled by the `iced` runtime.
 
 ```rust
-pub struct Action<Operation, Message> {
-    pub operation: Option<Operation>,
+pub struct Action<Instruction, Message> {
+    pub instruction: Option<Instruction>,
     pub task: Task<Message>,
 }
 ```
 
 One advantage of this approach is that it easily allows the user to compose
-an instruction that combines an operation and a task, whereas if we used an
-`enum` we would need to have a variant for operations, a variant for tasks, and
+an instruction that combines an instruction and a task, whereas if we used an
+`enum` we would need to have a variant for instructions, a variant for tasks, and
 a variant for combining them. This is useful, for instance, for minor UI-related
-tasks such as focusing a specific input field after an operation is handled by
+tasks such as focusing a specific input field after an instruction is handled by
 your app.
 
 Currently, this sample app only contains one such example: when the user clicks
@@ -65,7 +65,7 @@ pub fn update(sale: &mut Sale, message: Message) -> Action {
         Message::Show(msg) => match msg {
             // ...
             show::Message::StartEdit => {
-                Action::operation(Operation::StartEdit).with_task(focus_next())
+                Action::instruction(Instruction::StartEdit).with_task(focus_next())
             }
         },
     }
@@ -74,8 +74,8 @@ pub fn update(sale: &mut Sale, message: Message) -> Action {
 
 The main `App::update` function handles `Message`s by delegating them to the
 screens, which return an `Action` from their own `update` functions. So the 
-app then handles any operations and tasks contained in that action. Since
-operations can also return tasks, the app chains those returned tasks with the
+app then handles any instructions and tasks contained in that action. Since
+instructions can also return tasks, the app chains those returned tasks with the
 original task from the action.
 
 ```rust
@@ -86,20 +86,20 @@ impl App {
             Message::Sale(sale_id, msg) => {
                 let sale = /* get sale by id */;
                 let action = sale::update(sale, msg)
-                    .map_operation(move |o| Operation::Sale(sale_id, o))
+                    .map_instruction(move |o| Instruction::Sale(sale_id, o))
                     .map(move |m| Message::Sale(sale_id, m));
 
-                // handle operation returning either a useful task or a dummy
+                // handle instruction returning either a useful task or a dummy
                 // noop Task::none()
-                let operation_task = if let Some(operation) = action.operation {
-                    self.perform(operation)
+                let instruction_task = if let Some(instruction) = action.instruction {
+                    self.perform(instruction)
                 } else {
                     Task::none()
                 };
 
-                // chain the task returned by the operation with the task
+                // chain the task returned by the instruction with the task
                 // from the action
-                return operation_task.chain(action.task);
+                return instruction_task.chain(action.task);
             }
 
             // ...other variants...
@@ -109,7 +109,7 @@ impl App {
 ```
 
 Though this may seem like a lot of boilerplate, it composes nicely across the
-entire application and allows for a clean and flexible way to handle operations
+entire application and allows for a clean and flexible way to handle instructions
 from child components and any tasks they may want to perform.
 
 More information about the `Action` type can be found in the

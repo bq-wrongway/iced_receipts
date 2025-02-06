@@ -5,4 +5,4 @@ edition = "2021"
 authors = ["Andy Terra <spam@andyterra.com>"]
 
 [dependencies]
-iced = { version = "0.13.1", features = ["advanced"] }
+iced = { version = "0.13.1", features = ["advanced", "debug"] }
