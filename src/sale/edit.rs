@@ -3,12 +3,10 @@ use iced::widget::{
     button, column, container, focus_next, focus_previous, horizontal_space,
     pick_list, row, scrollable, text, text_input,
 };
-use iced::Length::Fill;
-use iced::{Alignment, Element, Length};
+use iced::{Alignment, Element, Fill};
 
+use super::{Action, Instruction, Sale, TaxGroup};
 use crate::Hotkey;
-
-use super::{Instruction, Sale, TaxGroup};
 
 #[derive(Debug, Clone)]
 pub enum Message {
@@ -65,7 +63,7 @@ pub fn view(sale: &Sale) -> Element<Message> {
     .padding([0, 10]);
 
     let items_list = sale.items.iter().fold(
-        column![column_headers].spacing(5).width(Length::Fill),
+        column![column_headers].spacing(5).width(Fill),
         |col, item| {
             col.push(
                 container(
@@ -187,7 +185,7 @@ pub fn view(sale: &Sale) -> Element<Message> {
         ]
     ]
     .spacing(2)
-    .width(Length::Fill);
+    .width(Fill);
 
     container(
         column![
@@ -202,27 +200,27 @@ pub fn view(sale: &Sale) -> Element<Message> {
                 .spacing(10)
                 .padding(20)
             ))
-            .height(Length::Fill)
+            .height(Fill)
             .style(container::rounded_box),
             container(totals).padding(20).style(container::rounded_box)
         ]
         .spacing(20)
-        .height(Length::Fill),
+        .height(Fill),
     )
     .padding(20)
     .into()
 }
 
-pub fn handle_hotkey(hotkey: Hotkey) -> crate::Action<Instruction, Message> {
+pub fn handle_hotkey(hotkey: Hotkey) -> Action<Instruction, Message> {
     match hotkey {
         Hotkey::Tab(modifier) => {
             if modifier.shift() {
-                crate::Action::task(focus_previous())
+                Action::task(focus_previous())
             } else {
-                crate::Action::task(focus_next())
+                Action::task(focus_next())
             }
         }
-        _ => crate::Action::none(),
+        _ => Action::none(),
     }
 }
 

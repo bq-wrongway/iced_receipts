@@ -6,12 +6,12 @@ use iced::{Element, Size, Subscription, Task};
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-mod common;
+mod action;
 mod list;
 mod sale;
 mod tax;
 
-pub use common::Action;
+pub use action::Action;
 use sale::Sale;
 
 fn main() -> iced::Result {

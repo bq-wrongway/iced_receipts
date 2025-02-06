@@ -1,11 +1,10 @@
 //! View and edit sales
-use iced::{
-    widget::{focus_next, text_input},
-    Element,
-};
+use iced::widget::{focus_next, text_input};
+use iced::Element;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-use crate::{tax::TaxGroup, Hotkey};
+use crate::tax::TaxGroup;
+use crate::{Action, Hotkey};
 
 pub mod edit;
 pub mod show;
@@ -122,9 +121,10 @@ pub enum Instruction {
     Cancel,
 }
 
-pub type Action = crate::Action<Instruction, Message>;
-
-pub fn update(sale: &mut Sale, message: Message) -> Action {
+pub fn update(
+    sale: &mut Sale,
+    message: Message,
+) -> Action<Instruction, Message> {
     match message {
         Message::Show(msg) => match msg {
             show::Message::Back => Action::instruction(Instruction::Back),
@@ -223,14 +223,11 @@ pub fn view(sale: &Sale, mode: Mode) -> Element<Message> {
     }
 }
 
-pub fn handle_hotkey(_: &Sale, mode: Mode, hotkey: Hotkey) -> Action {
-    // match hotkey {
-    //     Hotkey::Escape => Action::instruction(Instruction::Cancel),
-    //     _ => match mode {
-    //         Mode::View => Action::none(),
-    //         Mode::Edit => edit::handle_hotkey(hotkey).map(Message::Edit),
-    //     },
-    // }
+pub fn handle_hotkey(
+    _: &Sale,
+    mode: Mode,
+    hotkey: Hotkey,
+) -> Action<Instruction, Message> {
     match mode {
         Mode::View => show::handle_hotkey(hotkey).map(Message::Show),
         Mode::Edit => edit::handle_hotkey(hotkey).map(Message::Edit),

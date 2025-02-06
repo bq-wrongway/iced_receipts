@@ -5,9 +5,8 @@ use iced::widget::{
 use iced::Length::Fill;
 use iced::{Alignment, Element, Length};
 
-use crate::Hotkey;
-
 use super::{Instruction, Sale};
+use crate::{Action, Hotkey};
 
 #[derive(Debug, Clone)]
 pub enum Message {
@@ -111,9 +110,9 @@ pub fn view(sale: &Sale) -> Element<Message> {
     .into()
 }
 
-pub fn handle_hotkey(hotkey: Hotkey) -> crate::Action<Instruction, Message> {
+pub fn handle_hotkey(hotkey: Hotkey) -> Action<Instruction, Message> {
     match hotkey {
-        Hotkey::Escape => crate::Action::instruction(Instruction::Back),
-        _ => crate::Action::none(),
+        Hotkey::Escape => Action::instruction(Instruction::Back),
+        _ => Action::none(),
     }
 }
