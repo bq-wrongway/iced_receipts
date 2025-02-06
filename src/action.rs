@@ -56,12 +56,12 @@ use iced::advanced::graphics::futures::MaybeSend;
 use iced::Task;
 use std::fmt;
 
-pub struct Action<Instruction, Message> {
-    pub instruction: Option<Instruction>,
+pub struct Action<I, Message> {
+    pub instruction: Option<I>,
     pub task: Task<Message>,
 }
 
-impl<Instruction, Message> Action<Instruction, Message> {
+impl<I, Message> Action<I, Message> {
     /// Create a new `Action` with no `Instruction` or [`Task`](iced::Task).
     pub fn none() -> Self {
         Self {
@@ -71,7 +71,7 @@ impl<Instruction, Message> Action<Instruction, Message> {
     }
 
     /// Create a new `Action` with an `Instruction` and a [`Task`](iced::Task).
-    pub fn new(instruction: Instruction, task: Task<Message>) -> Self {
+    pub fn new(instruction: I, task: Task<Message>) -> Self {
         Self {
             instruction: Some(instruction),
             task,
@@ -80,7 +80,7 @@ impl<Instruction, Message> Action<Instruction, Message> {
 
     /// Create a new `Action` with an `Instruction` to be handled by some ancestor
     /// component.
-    pub fn instruction(instruction: Instruction) -> Self {
+    pub fn instruction(instruction: I) -> Self {
         Self {
             instruction: Some(instruction),
             task: Task::none(),
@@ -99,7 +99,7 @@ impl<Instruction, Message> Action<Instruction, Message> {
     pub fn map<N>(
         self,
         f: impl Fn(Message) -> N + MaybeSend + 'static,
-    ) -> Action<Instruction, N>
+    ) -> Action<I, N>
     where
         Message: MaybeSend + 'static,
         N: MaybeSend + 'static,
@@ -113,10 +113,10 @@ impl<Instruction, Message> Action<Instruction, Message> {
     /// Maps the `Instruction` of the `Action` to a different type.
     pub fn map_instruction<N>(
         self,
-        f: impl Fn(Instruction) -> N + MaybeSend + 'static,
+        f: impl Fn(I) -> N + MaybeSend + 'static,
     ) -> Action<N, Message>
     where
-        Instruction: MaybeSend + 'static,
+        I: MaybeSend + 'static,
         N: MaybeSend + 'static,
     {
         Action {
@@ -126,7 +126,7 @@ impl<Instruction, Message> Action<Instruction, Message> {
     }
 
     /// Sets the `Instruction` of an `Action`.
-    pub fn with_instruction(mut self, instruction: Instruction) -> Self {
+    pub fn with_instruction(mut self, instruction: I) -> Self {
         self.instruction = Some(instruction);
         self
     }
