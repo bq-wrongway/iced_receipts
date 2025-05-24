@@ -3,6 +3,7 @@ use iced::widget::{
     button, column, container, focus_next, focus_previous, horizontal_space,
     pick_list, row, scrollable, text, text_input,
 };
+use iced::Alignment::Center;
 use iced::{Alignment, Element, Fill};
 
 use super::{Action, Instruction, Sale, TaxGroup};
@@ -111,7 +112,7 @@ pub fn view(sale: &Sale) -> Element<Message> {
                         text(format!("${:.2}", item.price() * item.quantity()))
                             .align_x(Alignment::End)
                             .width(100.0),
-                        button("×")
+                        button(text("×").align_x(Center).align_y(Center))
                             .width(25.0)
                             .on_press(Message::RemoveItem(item.id))
                             .style(button::danger)
