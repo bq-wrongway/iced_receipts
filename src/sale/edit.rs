@@ -112,7 +112,7 @@ pub fn view(sale: &Sale) -> Element<Message> {
                         text(format!("${:.2}", item.price() * item.quantity()))
                             .align_x(Alignment::End)
                             .width(100.0),
-                        button(text("×").align_x(Center).align_y(Center))
+                        button(text("×").center())
                             .width(25.0)
                             .on_press(Message::RemoveItem(item.id))
                             .style(button::danger)
