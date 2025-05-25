@@ -16,7 +16,7 @@ pub enum Message {
 
 pub fn view(sale: &Sale) -> Element<Message> {
     let header = row![
-        button("←").width(40).on_press(Message::Back),
+        button(text("←").center()).width(40).on_press(Message::Back),
         text(&sale.name).size(16),
         horizontal_space(),
         button("Edit").on_press(Message::StartEdit)
